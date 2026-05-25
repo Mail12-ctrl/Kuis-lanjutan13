@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>🚀 Space Quiz Galaxy</title>
+
+<style>
+
+/* =========================
+🌌 STYLE
+========================= */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:black;
+overflow:hidden;
+color:white;
+text-align:center;
+}
+
+/* 🌌 Background */
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at 20% 20%, rgba(0,255,255,0.2), transparent 25%),
+radial-gradient(circle at 80% 30%, rgba(255,0,255,0.2), transparent 25%),
+linear-gradient(#000010,#020b2d,#000);
+z-index:-3;
+}
+
+/* ⭐ Stars */
+.stars{
+position:fixed;
+width:100%;
+height:100%;
+background:url("https://www.transparenttextures.com/patterns/stardust.png");
+animation:move 100s linear infinite;
+opacity:0.7;
+z-index:-2;
+}
+
+@keyframes move{
+to{
+background-position:10000px 5000px;
+}
+}
+
+.container{
+padding:20px;
+margin-top:20px;
+}
+
+/* 👨‍🚀 Character */
+.character{
+width:120px;
+filter:drop-shadow(0 0 20px cyan);
+animation:float 4s ease-in-out infinite;
+}
+
+@keyframes float{
+50%{
+transform:translateY(-15px);
+}
+}
+
+/* 🌍 Planet */
+.planet{
+font-size:70px;
+margin:10px;
+animation:float 5s ease-in-out infinite;
+}
+
+/* 🧊 Panel */
+.panel{
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.15);
+backdrop-filter:blur(10px);
+padding:15px;
+border-radius:20px;
+box-shadow:0 0 20px rgba(0,255,255,0.2);
+margin:10px;
+}
+
+/* 🔘 Button */
+button{
+width:85%;
+padding:14px;
+margin:10px;
+border:none;
+border-radius:18px;
+font-size:17px;
+font-weight:bold;
+background:linear-gradient(45deg,#00c6ff,#0072ff);
+color:white;
+transition:0.2s;
+box-shadow:0 0 15px rgba(0,200,255,0.5);
+}
+
+button:active{
+transform:scale(0.95);
+}
+
+/* HUD */
+.hud{
+display:flex;
+justify-content:space-around;
+margin:10px;
+font-size:16px;
+}
+
+/* ⏱ Timer */
+#timer{
+font-size:35px;
+font-weight:bold;
+color:#ff5555;
+margin:10px;
+text-shadow:0 0 15px red;
+}
+
+/* ❓ Soal */
+#soal{
+font-size:22px;
+line-height:1.5;
+}
+
+/* ✅ Benar */
+.correct{
+animation:correctFlash 0.4s;
+}
+
+@keyframes correctFlash{
+0%{background:#00ff88;}
+100%{background:black;}
+}
+
+/* ❌ Salah */
+.wrong{
+animation:wrongFlash 0.4s;
+}
+
+@keyframes wrongFlash{
+0%{background:#ff0033;}
+25%{transform:translateX(-10px);}
+50%{transform:translateX(10px);}
+100%{background:black;}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="stars"></div>
+
+<div class="container">
+
+<!-- MENU -->
+<div id="menu">
+
+<img class="character"
+src="https://cdn-icons-png.flaticon.com/512/3212/3212608.png">
+
+<h1>🚀 SPACE QUIZ GALAXY</h1>
+
+<p style="margin:10px">
+Jelajahi planet dan jawab pertanyaan!
+</p>
+
+<button onclick="startGame()">
+🎮 Mulai Petualangan
+</button>
+
+</div>
+
+<!-- STORY -->
+<div id="story" style="display:none">
+
+<div class="planet" id="planetIcon">
+🌍
+</div>
+
+<div class="panel">
+
+<h2 id="storyText"></h2>
+
+</div>
+
+<button onclick="mulaiGame()">
+➡️ Lanjut
+</button>
+
+</div>
+
+<!-- GAME -->
+<div id="game" style="display:none">
+
+<div class="hud panel">
+
+<div id="life">
+❤️❤️❤️
+</div>
+
+<div id="coin">
+🪙 0
+</div>
+
+<div id="planetName">
+🌍 Bumi
+</div>
+
+</div>
+
+<div id="timer">
+10
+</div>
+
+<div class="panel">
+
+<div id="soal"></div>
+
+</div>
+
+<div id="pilihan"></div>
+
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover" style="display:none">
+
+<h1 style="font-size:50px">
+💀
+</h1>
+
+<h1>GAME OVER</h1>
+
+<div class="panel">
+
+<p id="hasil"></p>
+
+</div>
+
+<button onclick="location.reload()">
+🔄 Main Lagi
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* =========================
+🎮 VARIABLE
+========================= */
+
+let nyawa=3;
+let coin=0;
+let current;
+let interval;
+let waktu=10;
+
+/* =========================
+🌍 PLANET STORY
+========================= */
+
+let planets=[
+
+{
+nama:"🌍 Bumi",
+story:"🚀 Misi dimulai dari Bumi!",
+icon:"🌍"
+},
+
+{
+nama:"🌕 Bulan",
+story:"🌕 Kamu sampai di Bulan!",
+icon:"🌕"
+},
+
+{
+nama:"🪐 Saturnus",
+story:"🪐 Planet cincin ditemukan!",
+icon:"🪐"
+},
+
+{
+nama:"🌌 Galaxy",
+story:"🌌 Galaksi misterius ditemukan!",
+icon:"🌌"
+}
+
+];
+
+/* =========================
+📚 SOAL
+========================= */
+
+let soal=[
+
+{
+t:"Ibukota Indonesia?",
+o:["Jakarta","Bandung","Medan","Bali"],
+b:0
+},
+
+{
+t:"Planet terbesar?",
+o:["Mars","Bumi","Jupiter","Venus"],
+b:2
+},
+
+{
+t:"7 x 8 = ?",
+o:["54","56","58","64"],
+b:1
+},
+
+{
+t:"Unsur Fe adalah?",
+o:["Besi","Emas","Perak","Karbon"],
+b:0
+},
+
+{
+t:"Bahasa Inggris 'Buku'?",
+o:["Pen","Book","Bag","Table"],
+b:1
+},
+
+{
+t:"Indonesia merdeka tahun?",
+o:["1942","1945","1950","1965"],
+b:1
+},
+
+{
+t:"2,4,6,8,...?",
+o:["9","10","11","12"],
+b:1
+},
+
+{
+t:"Gunung tertinggi di dunia?",
+o:["Fuji","Everest","Kerinci","Alpen"],
+b:1
+},
+
+{
+t:"Rumus gaya?",
+o:["F=ma","E=mc²","V=IR","P=mv"],
+b:0
+},
+
+{
+t:"Bahasa Inggris 'Sekolah'?",
+o:["Hospital","School","Market","Office"],
+b:1
+},
+
+{
+t:"Ibukota Korea Selatan?",
+o:["Tokyo","Seoul","Bangkok","Beijing"],
+b:1
+},
+
+{
+t:"Planet terkecil?",
+o:["Merkurius","Mars","Venus","Saturnus"],
+b:0
+},
+
+{
+t:"Samudra terbesar?",
+o:["Atlantik","Pasifik","Hindia","Arktik"],
+b:1
+},
+
+{
+t:"Negara asal sushi?",
+o:["China","Korea","Jepang","Thailand"],
+b:2
+},
+
+{
+t:"Hewan tercepat?",
+o:["Singa","Cheetah","Harimau","Kuda"],
+b:1
+},
+
+{
+t:"Mata uang Amerika?",
+o:["Yen","Euro","Dollar","Won"],
+b:2
+},
+
+{
+t:"8 x 7 = ?",
+o:["54","56","58","64"],
+b:1
+},
+
+{
+t:"144 ÷ 12 = ?",
+o:["10","11","12","13"],
+b:2
+},
+
+{
+t:"10² = ?",
+o:["20","50","100","200"],
+b:2
+},
+
+{
+t:"6³ = ?",
+o:["36","72","216","126"],
+b:2
+},
+
+{
+t:"Planet paling panas?",
+o:["Mars","Venus","Jupiter","Saturnus"],
+b:1
+},
+
+{
+t:"Alat ukur suhu?",
+o:["Barometer","Termometer","Mikroskop","Hygrometer"],
+b:1
+},
+
+{
+t:"Vitamin dari matahari?",
+o:["A","B","C","D"],
+b:3
+},
+
+{
+t:"Sinonim cepat?",
+o:["Lambat","Kilat","Malas","Lemah"],
+b:1
+},
+
+{
+t:"Antonim tinggi?",
+o:["Pendek","Besar","Luas","Cepat"],
+b:0
+},
+
+{
+t:"Puisi terdiri dari?",
+o:["Baris","Rumus","Grafik","Peta"],
+b:0
+},
+
+{
+t:"Bahasa Inggris 'Rumah'?",
+o:["School","House","Office","Garden"],
+b:1
+},
+
+{
+t:"'Teacher' artinya?",
+o:["Dokter","Guru","Polisi","Pilot"],
+b:1
+},
+
+{
+t:"Presiden pertama Indonesia?",
+o:["Soeharto","Soekarno","Habibie","Jokowi"],
+b:1
+},
+
+{
+t:"Tanggal kemerdekaan Indonesia?",
+o:["10 Nov","17 Agustus","1 Juni","28 Oktober"],
+b:1
+},
+
+{
+t:"VOC berasal dari negara?",
+o:["Inggris","Belanda","Portugal","Jepang"],
+b:1
+}
+
+];
+
+/* 🔀 Acak soal */
+soal.sort(()=>Math.random()-0.5);
+
+/* =========================
+🚀 START
+========================= */
+
+function startGame(){
+
+document.getElementById("menu").style.display="none";
+
+showStory();
+
+}
+
+/* =========================
+📖 STORY
+========================= */
+
+function showStory(){
+
+let p=
+planets[
+Math.floor(coin/20)%planets.length
+];
+
+document.getElementById("story").style.display="block";
+
+document.getElementById("planetIcon").innerText=p.icon;
+
+document.getElementById("storyText").innerText=p.story;
+
+}
+
+/* =========================
+▶️ MULAI GAME
+========================= */
+
+function mulaiGame(){
+
+document.getElementById("story").style.display="none";
+
+document.getElementById("game").style.display="block";
+
+tampil();
+
+}
+
+/* =========================
+🎯 TAMPIL SOAL
+========================= */
+
+function tampil(){
+
+clearInterval(interval);
+
+current=
+soal[Math.floor(Math.random()*soal.length)];
+
+document.getElementById("life").innerText=
+"❤️".repeat(nyawa);
+
+document.getElementById("coin").innerText=
+"🪙 "+coin;
+
+let p=
+planets[
+Math.floor(coin/20)%planets.length
+];
+
+document.getElementById("planetName").innerText=
+p.nama;
+
+document.getElementById("soal").innerText=
+current.t;
+
+let html="";
+
+current.o.forEach((o,i)=>{
+
+html+=`
+<button onclick="cek(${i})">
+${o}
+</button>
+`;
+
+});
+
+document.getElementById("pilihan").innerHTML=html;
+
+timer();
+
+}
+
+/* =========================
+⏱ TIMER
+========================= */
+
+function timer(){
+
+clearInterval(interval);
+
+waktu=10;
+
+document.getElementById("timer").innerText=waktu;
+
+interval=setInterval(()=>{
+
+waktu--;
+
+document.getElementById("timer").innerText=waktu;
+
+if(waktu<=0){
+
+salah();
+
+}
+
+},1000);
+
+}
+
+/* =========================
+✅ CEK
+========================= */
+
+function cek(j){
+
+clearInterval(interval);
+
+if(j==current.b){
+
+document.body.classList.add("correct");
+
+setTimeout(()=>{
+
+document.body.classList.remove("correct");
+
+},300);
+
+coin+=10;
+
+if(coin%20==0){
+
+document.getElementById("game").style.display="none";
+
+showStory();
+
+}else{
+
+tampil();
+
+}
+
+}else{
+
+salah();
+
+}
+
+}
+
+/* =========================
+❌ SALAH
+========================= */
+
+function salah(){
+
+clearInterval(interval);
+
+document.body.classList.add("wrong");
+
+setTimeout(()=>{
+
+document.body.classList.remove("wrong");
+
+},300);
+
+nyawa--;
+
+if(nyawa<=0){
+
+gameOver();
+
+}else{
+
+tampil();
+
+}
+
+}
+
+/* =========================
+💀 GAME OVER
+========================= */
+
+function gameOver(){
+
+clearInterval(interval);
+
+document.getElementById("game").style.display="none";
+
+document.getElementById("gameover").style.display="block";
+
+document.getElementById("hasil").innerText=
+"🪙 Coin didapat: "+coin;
+
+}
+
+</script>
+
+</body>
+  </html>
